@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/ktr0731/go-fuzzyfinder"
 )
 
 // CoAuthor represents a contributor that can be added to commits
@@ -626,80 +627,43 @@ func selectMultipleCoAuthors(coAuthors []CoAuthor, activeCoAuthors []CoAuthor) (
 	return selectedAuthors, nil
 }
 
-// selectMultipleActiveCoAuthors allows selecting multiple active co-authors for removal
 func selectMultipleActiveCoAuthors(activeCoAuthors []CoAuthor) ([]CoAuthor, error) {
-	// Check if fzf is installed
-	if _, err := exec.LookPath("fzf"); err != nil {
-		return nil, fmt.Errorf("fzf is not installed: %w", err)
-	}
+    if len(activeCoAuthors) == 0 {
+        return nil, fmt.Errorf("no active co-authors to select from")
+    }
 
-	if len(activeCoAuthors) == 0 {
-		return nil, fmt.Errorf("no active co-authors to select from")
-	}
+    // Run the fuzzy finder and get selected indices
+    indices, err := fuzzyfinder.FindMulti(
+        activeCoAuthors,
+        func(i int) string {
+            return fmt.Sprintf("%s <%s>", activeCoAuthors[i].Name, activeCoAuthors[i].Email)
+        },
+        fuzzyfinder.WithPromptString("Select co-authors to remove (TAB to select multiple):"),
+        fuzzyfinder.WithPreviewWindow(func(i, _, _ int) string {
+            if i == -1 {
+                return ""
+            }
+            return fmt.Sprintf("Name: %s\nEmail: %s\n",
+                activeCoAuthors[i].Name,
+                activeCoAuthors[i].Email)
+        }),
+    )
 
-	// Create input for fzf
-	var input bytes.Buffer
-	for i, author := range activeCoAuthors {
-		input.WriteString(fmt.Sprintf("%d: %s <%s>\n", i, author.Name, author.Email))
-	}
+    if err != nil {
+        // User canceled selection
+        if err == fuzzyfinder.ErrAbort {
+            return nil, fmt.Errorf("selection canceled")
+        }
+        return nil, fmt.Errorf("fuzzy finder error: %w", err)
+    }
 
-	// Create a temporary file to feed input to fzf
-	tempFile, err := os.CreateTemp("", "pair-fzf-input")
-	if err != nil {
-		return nil, fmt.Errorf("failed to create temporary file: %w", err)
-	}
-	defer os.Remove(tempFile.Name())
+    // Convert selected indices to co-authors
+    var selectedCoAuthors []CoAuthor
+    for _, idx := range indices {
+        selectedCoAuthors = append(selectedCoAuthors, activeCoAuthors[idx])
+    }
 
-	// Write the input data to the temp file
-	if _, err := tempFile.Write(input.Bytes()); err != nil {
-		tempFile.Close()
-		return nil, fmt.Errorf("failed to write to temporary file: %w", err)
-	}
-	tempFile.Close()
-
-	// Start fzf with input from the temp file with multi-select enabled
-	cmd := exec.Command("sh", "-c", fmt.Sprintf("cat %s | fzf --ansi --multi --height 40%% --layout=reverse --prompt 'Select co-authors to remove (TAB to select multiple): '", tempFile.Name()))
-	cmd.Stdin = os.Stdin
-	cmd.Stderr = os.Stderr
-	outputBytes, err := cmd.Output()
-
-	// Handle command errors
-	if err != nil {
-		// User canceled selection (exit code 130)
-		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 130 {
-			return nil, fmt.Errorf("selection canceled")
-		}
-		return nil, fmt.Errorf("fzf selection failed: %w", err)
-	}
-
-	// Parse the selected lines
-	selection := strings.TrimSpace(string(outputBytes))
-	if selection == "" {
-		return nil, fmt.Errorf("no co-authors selected")
-	}
-
-	var selectedAuthors []CoAuthor
-	lines := strings.Split(selection, "\n")
-
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-
-		var index int
-		if _, err := fmt.Sscanf(line, "%d:", &index); err != nil {
-			return nil, fmt.Errorf("failed to parse selection: %w", err)
-		}
-
-		if index < 0 || index >= len(activeCoAuthors) {
-			return nil, fmt.Errorf("invalid selection index")
-		}
-
-		selectedAuthors = append(selectedAuthors, activeCoAuthors[index])
-	}
-
-	return selectedAuthors, nil
+    return selectedCoAuthors, nil
 }
 
 func listCoAuthors(cmd *cobra.Command, args []string) {
