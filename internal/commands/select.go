@@ -4,13 +4,23 @@ import (
 	"fmt"
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/philippeckel/pair/internal/models"
+	"strings"
 )
 
 // selectCoAuthorWithFzf presents a fuzzy finder interface for selecting a co-author
 func selectCoAuthorWithFzf(coAuthors []models.CoAuthor, activeCoAuthors []models.CoAuthor) (models.CoAuthor, error) {
 	// Filter out already active co-authors
+
+	userName, userEmail, err := getGitUserInfo()
+	if err != nil {
+		return models.CoAuthor{}, fmt.Errorf("failed to get git user info: %w", err)
+	}
 	var availableCoAuthors []models.CoAuthor
 	for _, author := range coAuthors {
+
+		if strings.EqualFold(author.Email, userEmail) || strings.EqualFold(author.Name, userName) {
+			continue
+		}
 		isActive := false
 		for _, active := range activeCoAuthors {
 			if author.Email == active.Email {
@@ -53,9 +63,18 @@ func selectCoAuthorWithFzf(coAuthors []models.CoAuthor, activeCoAuthors []models
 
 // selectMultipleCoAuthors allows selecting multiple co-authors at once
 func selectMultipleCoAuthors(coAuthors []models.CoAuthor, activeCoAuthors []models.CoAuthor) ([]models.CoAuthor, error) {
+	userName, userEmail, err := getGitUserInfo()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get git user info: %w", err)
+	}
+
 	// Filter out already active co-authors
 	var availableCoAuthors []models.CoAuthor
 	for _, author := range coAuthors {
+		// Skip yourself - check both name and email
+		if strings.EqualFold(author.Email, userEmail) || strings.EqualFold(author.Name, userName) {
+			continue
+		}
 		isActive := false
 		for _, active := range activeCoAuthors {
 			if author.Email == active.Email {

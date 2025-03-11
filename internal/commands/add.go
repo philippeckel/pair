@@ -5,11 +5,20 @@ import (
 	"github.com/philippeckel/pair/internal/config"
 	"github.com/philippeckel/pair/internal/gittemplate"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
+// addCoAuthor adds one or more co-authors to the git commit template
+// addCoAuthor adds one or more co-authors to the git commit template
 func addCoAuthor(cmd *cobra.Command, args []string) error {
 	if err := config.LoadConfig(); err != nil {
 		return err
+	}
+
+	// Get current git user name and email for self-check
+	userName, userEmail, err := getGitUserInfo()
+	if err != nil {
+		return fmt.Errorf("failed to get git user info: %w", err)
 	}
 
 	// Get current template
@@ -24,12 +33,23 @@ func addCoAuthor(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Track if any co-authors were successfully added
+	added := false
+	// Track warnings to display at the end
+	var warnings []string
+
 	// Process each co-author identifier provided in args
 	for _, identifier := range args {
 		coAuthor, _, err := findCoAuthorByAliasOrIndex(identifier)
 		if err != nil {
-			fmt.Printf("Error: %v\n", err)
-			continue // Continue processing other identifiers even if one fails
+			// Return error for non-existent co-authors
+			return fmt.Errorf("error with '%s': %w", identifier, err)
+		}
+
+		// Check if attempting to add yourself as co-author
+		if strings.EqualFold(coAuthor.Email, userEmail) || strings.EqualFold(coAuthor.Name, userName) {
+			warnings = append(warnings, fmt.Sprintf("Cannot add yourself as a co-author: %s <%s>", coAuthor.Name, coAuthor.Email))
+			continue
 		}
 
 		// Check if co-author is already active
@@ -37,7 +57,7 @@ func addCoAuthor(cmd *cobra.Command, args []string) error {
 		for _, active := range activeCoAuthors {
 			if active.Email == coAuthor.Email {
 				alreadyActive = true
-				fmt.Printf("Co-author already active: %s <%s>\n", coAuthor.Name, coAuthor.Email)
+				warnings = append(warnings, fmt.Sprintf("Co-author already active: %s <%s>", coAuthor.Name, coAuthor.Email))
 				break
 			}
 		}
@@ -46,12 +66,22 @@ func addCoAuthor(cmd *cobra.Command, args []string) error {
 		if !alreadyActive {
 			activeCoAuthors = append(activeCoAuthors, coAuthor)
 			fmt.Printf("Adding co-author: %s <%s>\n", coAuthor.Name, coAuthor.Email)
+			added = true
 		}
 	}
 
-	// Update git template with all co-authors
-	if err := gittemplate.UpdateTemplate(activeCoAuthors); err != nil {
-		return err
+	// Display all collected warnings
+	for _, warning := range warnings {
+		fmt.Println(warning)
+	}
+
+	// Only update the template if at least one co-author was added
+	if added {
+		if err := gittemplate.UpdateTemplate(activeCoAuthors); err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("no co-authors were added")
 	}
 
 	return nil
