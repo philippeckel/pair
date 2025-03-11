@@ -2,8 +2,10 @@ package commands
 
 import (
 	"fmt"
+	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/philippeckel/pair/internal/gittemplate"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 func showActiveCoAuthors(cmd *cobra.Command, args []string) {
@@ -29,8 +31,14 @@ func showActiveCoAuthors(cmd *cobra.Command, args []string) {
 		return
 	}
 
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+
 	fmt.Println("Active co-authors:")
-	for i, author := range activeCoAuthors {
-		fmt.Printf("%d: %s <%s>\n", i, author.Name, author.Email)
+	t.AppendHeader(table.Row{"Name", "Email"})
+
+	for _, author := range activeCoAuthors {
+		t.AppendRow([]interface{}{author.Name, author.Email})
 	}
+	t.Render()
 }
