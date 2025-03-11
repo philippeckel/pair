@@ -12,17 +12,6 @@ func addCoAuthor(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	identifier := args[0]
-	coAuthor, _, err := findCoAuthorByAliasOrIndex(identifier)
-	if err != nil {
-		return err
-	}
-
-	// Validate the co-author
-	if err := coAuthor.Validate(); err != nil {
-		return fmt.Errorf("invalid co-author: %w", err)
-	}
-
 	// Get current template
 	templatePath, err := gittemplate.GetCurrentTemplate()
 	if err != nil {
@@ -35,21 +24,35 @@ func addCoAuthor(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Check if co-author is already active
-	for _, active := range activeCoAuthors {
-		if active.Email == coAuthor.Email {
-			return fmt.Errorf("co-author '%s' is already active", coAuthor.Name)
+	// Process each co-author identifier provided in args
+	for _, identifier := range args {
+		coAuthor, _, err := findCoAuthorByAliasOrIndex(identifier)
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+			continue // Continue processing other identifiers even if one fails
+		}
+
+		// Check if co-author is already active
+		alreadyActive := false
+		for _, active := range activeCoAuthors {
+			if active.Email == coAuthor.Email {
+				alreadyActive = true
+				fmt.Printf("Co-author already active: %s <%s>\n", coAuthor.Name, coAuthor.Email)
+				break
+			}
+		}
+
+		// Add co-author if not already active
+		if !alreadyActive {
+			activeCoAuthors = append(activeCoAuthors, coAuthor)
+			fmt.Printf("Adding co-author: %s <%s>\n", coAuthor.Name, coAuthor.Email)
 		}
 	}
 
-	// Add the co-author
-	activeCoAuthors = append(activeCoAuthors, coAuthor)
-
-	// Update template
+	// Update git template with all co-authors
 	if err := gittemplate.UpdateTemplate(activeCoAuthors); err != nil {
 		return err
 	}
 
-	fmt.Printf("Added co-author: %s <%s>\n", coAuthor.Name, coAuthor.Email)
 	return nil
 }

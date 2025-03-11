@@ -31,11 +31,12 @@ var showCmd = &cobra.Command{
 }
 
 var addCmd = &cobra.Command{
-	Use:     "add [alias or index]",
-	Short:   "Add a co-author to Git commits by alias or index",
-	Args:    cobra.ExactArgs(1),
+	Use:     "add [alias or index]...",
+	Short:   "Add one or more co-authors to Git commits by alias or index",
+	Args:    cobra.MinimumNArgs(1),
 	RunE:    addCoAuthor,
 	Aliases: []string{"a"},
+	Example: "pair add jane john",
 }
 
 var removeCmd = &cobra.Command{
