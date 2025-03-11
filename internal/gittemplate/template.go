@@ -24,11 +24,29 @@ func GetCurrentTemplate() (string, error) {
 	return strings.TrimSpace(string(output)), nil
 }
 
+// getTemplatePath returns a persistent path for the git template
+func getTemplatePath() (string, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("could not get home directory: %w", err)
+	}
+
+	// Create the .config/pair directory if it doesn't exist
+	configDir := filepath.Join(homeDir, ".config", "pair")
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		return "", fmt.Errorf("could not create config directory: %w", err)
+	}
+
+	return filepath.Join(configDir, "git_commit_template"), nil
+}
+
 // UpdateTemplate writes a new git template with the given co-authors
 func UpdateTemplate(activeCoAuthors []models.CoAuthor) error {
-	// Create a temporary file for the commit template
-	tempDir := os.TempDir()
-	templatePath := filepath.Join(tempDir, "git_commit_template")
+	// Get a persistent path for the template
+	templatePath, err := getTemplatePath()
+	if err != nil {
+		return err
+	}
 
 	var content strings.Builder
 	content.WriteString("\n\n") // Leave space for commit message
@@ -49,4 +67,9 @@ func UpdateTemplate(activeCoAuthors []models.CoAuthor) error {
 	}
 
 	return nil
+}
+
+// ClearTemplate removes all co-authors from the commit template
+func ClearTemplate() error {
+	return UpdateTemplate([]models.CoAuthor{})
 }

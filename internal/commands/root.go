@@ -155,7 +155,6 @@ func Execute() {
 
 	// Add all subcommands
 	rootCmd.AddCommand(listCmd, showCmd, addCmd, removeCmd, clearCmd, initCmd, selectCmd, unselectCmd)
-	// selectCmd, unselectCmd, multiselectCmd, multiunselectCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
