@@ -3,10 +3,9 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/philippeckel/pair/internal/models"
 	"os"
 	"path/filepath"
-
-	"github.com/philippeckel/pair/internal/models"
 )
 
 var (
@@ -14,12 +13,21 @@ var (
 	Config     models.Config
 )
 
-// GetDefaultConfigPath returns the default path for the config file
-func GetDefaultConfigPath() string {
+// GetDefaultConfigPath returns the default path for the config file,
+// prioritizing a local .pair.json if it exists
+func GetConfigPath() string {
+	// First check if there's a .pair.json file in the current directory
+	localConfig := ".pair.json"
+	if _, err := os.Stat(localConfig); err == nil {
+		// Local config exists, use it
+		return localConfig
+	}
+
+	// No local config, use the one in home directory
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		// If we can't get home dir, use current directory
-		return ".pair.json"
+		// If we can't get home dir, use current directory as fallback
+		return localConfig
 	}
 	return filepath.Join(homeDir, ".pair.json")
 }

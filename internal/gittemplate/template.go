@@ -69,7 +69,17 @@ func UpdateTemplate(activeCoAuthors []models.CoAuthor) error {
 	return nil
 }
 
-// ClearTemplate removes all co-authors from the commit template
+// ClearTemplate removes the commit template configuration from git
 func ClearTemplate() error {
-	return UpdateTemplate([]models.CoAuthor{})
+	// Unset the commit.template configuration
+	cmd := exec.Command("git", "config", "--global", "--unset", "commit.template")
+	if err := cmd.Run(); err != nil {
+		// Exit code 5 means the section or key doesn't exist, which is fine
+		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 5 {
+			return nil
+		}
+		return fmt.Errorf("failed to unset git commit template: %w", err)
+	}
+
+	return nil
 }

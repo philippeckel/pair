@@ -2,8 +2,6 @@ package commands
 
 import (
 	"fmt"
-	// "strings"
-
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/philippeckel/pair/internal/models"
 )
@@ -37,15 +35,6 @@ func selectCoAuthorWithFzf(coAuthors []models.CoAuthor, activeCoAuthors []models
 			return fmt.Sprintf("%s (%s) <%s>", availableCoAuthors[i].Name, availableCoAuthors[i].Alias, availableCoAuthors[i].Email)
 		},
 		fuzzyfinder.WithPromptString("Select co-author:"),
-		fuzzyfinder.WithPreviewWindow(func(i, _, _ int) string {
-			if i == -1 {
-				return ""
-			}
-			return fmt.Sprintf("Name: %s\nAlias: %s\nEmail: %s",
-				availableCoAuthors[i].Name,
-				availableCoAuthors[i].Alias,
-				availableCoAuthors[i].Email)
-		}),
 	)
 
 	if err != nil {
@@ -90,16 +79,7 @@ func selectMultipleCoAuthors(coAuthors []models.CoAuthor, activeCoAuthors []mode
 		func(i int) string {
 			return fmt.Sprintf("%s (%s) <%s>", availableCoAuthors[i].Name, availableCoAuthors[i].Alias, availableCoAuthors[i].Email)
 		},
-		fuzzyfinder.WithPromptString("Select co-authors to add (TAB/Space to select multiple):"),
-		fuzzyfinder.WithPreviewWindow(func(i, _, _ int) string {
-			if i == -1 {
-				return ""
-			}
-			return fmt.Sprintf("Name: %s\nAlias: %s\nEmail: %s",
-				availableCoAuthors[i].Name,
-				availableCoAuthors[i].Alias,
-				availableCoAuthors[i].Email)
-		}),
+		fuzzyfinder.WithPromptString("Select co-authors to add using TAB:"),
 	)
 
 	if err != nil {
@@ -178,7 +158,7 @@ func selectMultipleCoAuthorsToRemove(activeCoAuthors []models.CoAuthor) ([]model
 	if err != nil {
 		// User canceled selection
 		if err == fuzzyfinder.ErrAbort {
-			return nil, fmt.Errorf("selection canceled")
+			return nil, fmt.Errorf("Selection canceled")
 		}
 		return nil, fmt.Errorf("fuzzy finder error: %w", err)
 	}

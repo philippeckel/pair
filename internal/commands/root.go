@@ -151,7 +151,7 @@ func init() {
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	rootCmd.PersistentFlags().StringVarP(&config.ConfigPath, "config", "c",
-		config.GetDefaultConfigPath(), "config file path")
+		config.GetConfigPath(), "config file path")
 
 	// Add all subcommands
 	rootCmd.AddCommand(listCmd, showCmd, addCmd, removeCmd, clearCmd, initCmd, selectCmd, unselectCmd)
