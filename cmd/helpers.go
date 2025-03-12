@@ -3,6 +3,8 @@ package commands
 import (
 	"fmt"
 	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/jedib0t/go-pretty/v6/text"
+
 	"github.com/philippeckel/pair/internal/config"
 	"github.com/philippeckel/pair/internal/models"
 	"os"
@@ -56,7 +58,30 @@ func renderCoAuthorTable(title string, authors []models.CoAuthor, getAlias func(
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 
-	if title != "" {
+	noColor := config.IsColorDisabled()
+
+	if !noColor {
+		// Apply styling as normal
+		t.SetStyle(table.Style{
+			Name: "CustomStyle",
+			Box:  table.StyleBoxLight,
+			Color: table.ColorOptions{
+				Header: text.Colors{text.FgGreen, text.Bold},
+				Row:    text.Colors{text.FgWhite},
+				Footer: text.Colors{text.FgGreen},
+			},
+			Format: table.FormatOptions{
+				Header: text.FormatUpper,
+			},
+			Options: table.Options{
+				DrawBorder:      true,
+				SeparateHeader:  true,
+				SeparateColumns: true,
+			},
+		})
+		fmt.Println(title)
+	} else {
+		t.SetStyle(table.StyleLight)
 		fmt.Println(title)
 	}
 
@@ -70,6 +95,5 @@ func renderCoAuthorTable(title string, authors []models.CoAuthor, getAlias func(
 
 		t.AppendRow([]interface{}{i, alias, author.Name, author.Email})
 	}
-
 	t.Render()
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/philippeckel/pair/internal/models"
+	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
 )
@@ -146,4 +147,67 @@ func SaveConfig() error {
 	}
 
 	return nil
+}
+
+func InitViper() error {
+	// Get home directory for config file
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("error getting home directory: %w", err)
+	}
+
+	configDir := filepath.Join(home, ".config", "pair")
+
+	// Create config directory if it doesn't exist
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		return fmt.Errorf("could not create config directory: %w", err)
+	}
+
+	// Set default config name and paths
+	viper.SetConfigName("config") // Config file name without extension
+	viper.SetConfigType("yaml")   // Config file type
+
+	// Search in home directory and current directory
+	viper.AddConfigPath(configDir)
+	viper.AddConfigPath(".")
+
+	// Set default values
+	viper.SetDefault("no_color", false) // Default to using colors
+	viper.SetDefault("debug", false)    // Default to no debug mode
+	viper.SetDefault("default_template_path", filepath.Join(home, ".config", "pair", "git_commit_template"))
+
+	// Check environment variables that match the config keys
+	// This will override values from config file
+	viper.AutomaticEnv()
+
+	// Override with environment variables like PAIR_NO_COLOR
+	if _, exists := os.LookupEnv("PAIR_NO_COLOR"); exists {
+		viper.Set("no_color", true)
+	}
+
+	// Load config from file (if it exists)
+	if err := viper.ReadInConfig(); err != nil {
+		// It's okay if config file doesn't exist
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			// Return error only if it's not "file not found"
+			return fmt.Errorf("error reading config file: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// IsColorDisabled returns true if colors should be disabled
+func IsColorDisabled() bool {
+	return viper.GetBool("no_color")
+}
+
+// GetDebug returns true if debug mode is enabled
+func GetDebug() bool {
+	return viper.GetBool("debug")
+}
+
+// GetTemplatePath returns the configured git template path
+func GetTemplatePath() string {
+	return viper.GetString("default_template_path")
 }
