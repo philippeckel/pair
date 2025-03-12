@@ -179,8 +179,8 @@ func InitViper() error {
 	// This will override values from config file
 	viper.AutomaticEnv()
 
-	// Override with environment variables like PAIR_NO_COLOR
-	if _, exists := os.LookupEnv("PAIR_NO_COLOR"); exists {
+	// Override with environment variables like NO_COLOR
+	if _, exists := os.LookupEnv("NO_COLOR"); exists {
 		viper.Set("no_color", true)
 	}
 
