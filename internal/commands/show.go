@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/philippeckel/pair/internal/config"
 	"github.com/philippeckel/pair/internal/gittemplate"
 	"github.com/spf13/cobra"
 	"os"
@@ -31,14 +32,29 @@ func showActiveCoAuthors(cmd *cobra.Command, args []string) {
 		return
 	}
 
+	// Load config to get aliases
+	if err := config.LoadConfig(); err != nil {
+		fmt.Printf("Warning: Could not load config for aliases: %v\n", err)
+		// Continue without aliases
+	}
+
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 
 	fmt.Println("Active co-authors:")
-	t.AppendHeader(table.Row{"Name", "Email"})
+	t.AppendHeader(table.Row{"#", "Alias", "Name", "Email"})
 
-	for _, author := range activeCoAuthors {
-		t.AppendRow([]interface{}{author.Name, author.Email})
+	for i, author := range activeCoAuthors {
+		// Find alias from config if available
+		alias := ""
+		for configAlias, configAuthor := range config.Config.CoAuthorsMap {
+			if configAuthor.Email == author.Email {
+				alias = configAlias
+				break
+			}
+		}
+
+		t.AppendRow([]interface{}{i, alias, author.Name, author.Email})
 	}
 	t.Render()
 }
