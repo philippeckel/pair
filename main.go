@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/philippeckel/pair/internal/commands"
+	"github.com/philippeckel/pair/cmd"
 )
 
 func main() {

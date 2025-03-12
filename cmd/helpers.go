@@ -2,8 +2,10 @@ package commands
 
 import (
 	"fmt"
+	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/philippeckel/pair/internal/config"
 	"github.com/philippeckel/pair/internal/models"
+	"os"
 	exec "os/exec"
 	"strings"
 )
@@ -48,4 +50,26 @@ func getGitUserInfo() (name string, email string, err error) {
 	email = strings.TrimSpace(string(emailBytes))
 
 	return name, email, nil
+}
+
+func renderCoAuthorTable(title string, authors []models.CoAuthor, getAlias func(author models.CoAuthor) string) {
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+
+	if title != "" {
+		fmt.Println(title)
+	}
+
+	t.AppendHeader(table.Row{"#", "Alias", "Name", "Email"})
+
+	for i, author := range authors {
+		alias := ""
+		if getAlias != nil {
+			alias = getAlias(author)
+		}
+
+		t.AppendRow([]interface{}{i, alias, author.Name, author.Email})
+	}
+
+	t.Render()
 }
