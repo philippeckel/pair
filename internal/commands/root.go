@@ -84,68 +84,44 @@ var selectCmd = &cobra.Command{
 			return err
 		}
 
-		// Get flag value
-		multi, _ := cmd.Flags().GetBool("multiple")
+		// Always use multiple selection mode as default
+		coAuthors, err := selectMultipleCoAuthors(config.Config.CoAuthors, activeCoAuthors)
+		if err != nil {
+			return err
+		}
 
-		if multi {
-			// Multiple selection mode
-			coAuthors, err := selectMultipleCoAuthors(config.Config.CoAuthors, activeCoAuthors)
-			if err != nil {
-				return err
-			}
-
-			// Add the selected co-authors
-			for _, coAuthor := range coAuthors {
-				// Check if already active
-				alreadyActive := false
-				for _, active := range activeCoAuthors {
-					if active.Email == coAuthor.Email {
-						alreadyActive = true
-						fmt.Printf("Co-author already active: %s <%s>\n", coAuthor.Name, coAuthor.Email)
-						break
-					}
-				}
-
-				if !alreadyActive {
-					activeCoAuthors = append(activeCoAuthors, coAuthor)
-					fmt.Printf("Adding co-author: %s <%s>\n", coAuthor.Name, coAuthor.Email)
+		// Add the selected co-authors
+		added := false
+		for _, coAuthor := range coAuthors {
+			// Check if already active
+			alreadyActive := false
+			for _, active := range activeCoAuthors {
+				if active.Email == coAuthor.Email {
+					alreadyActive = true
+					fmt.Printf("Co-author already active: %s <%s>\n", coAuthor.Name, coAuthor.Email)
+					break
 				}
 			}
 
-			// Update git template
+			if !alreadyActive {
+				activeCoAuthors = append(activeCoAuthors, coAuthor)
+				fmt.Printf("Added co-author: %s <%s>\n", coAuthor.Name, coAuthor.Email)
+				added = true
+			}
+		}
+
+		// Only update the template if at least one co-author was added
+		if added {
 			if err := gittemplate.UpdateTemplate(activeCoAuthors); err != nil {
 				return err
 			}
-
-			fmt.Printf("Added co-authors to your commit template\n")
 		} else {
-			// Single selection mode
-			coAuthor, err := selectCoAuthorWithFzf(config.Config.CoAuthors, activeCoAuthors)
-			if err != nil {
-				return err
-			}
-
-			// Add the selected co-author
-			activeCoAuthors = append(activeCoAuthors, coAuthor)
-
-			// Update git template
-			if err := gittemplate.UpdateTemplate(activeCoAuthors); err != nil {
-				return err
-			}
-
-			fmt.Printf("Added co-author: %s <%s>\n", coAuthor.Name, coAuthor.Email)
+			fmt.Println("No new co-authors were added")
 		}
 
 		return nil
 	},
 	Aliases: []string{"s"},
-}
-
-func init() {
-	// Add the multiple flag to select command
-	selectCmd.Flags().BoolP("multiple", "m", false, "Enable multiple selection mode")
-	// Make sure unselectCmd has the flag too
-	unselectCmd.Flags().BoolP("multiple", "m", false, "Enable multiple selection mode")
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

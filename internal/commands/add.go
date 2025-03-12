@@ -8,8 +8,6 @@ import (
 	"strings"
 )
 
-// addCoAuthor adds one or more co-authors to the git commit template
-// addCoAuthor adds one or more co-authors to the git commit template
 func addCoAuthor(cmd *cobra.Command, args []string) error {
 	if err := config.LoadConfig(); err != nil {
 		return err
