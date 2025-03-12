@@ -173,7 +173,6 @@ func InitViper() error {
 
 	// Set default values
 	viper.SetDefault("no_color", false) // Default to using colors
-	viper.SetDefault("debug", false)    // Default to no debug mode
 	viper.SetDefault("default_template_path", filepath.Join(home, ".config", "pair", "git_commit_template"))
 
 	// Check environment variables that match the config keys
