@@ -17,9 +17,14 @@ var rootCmd = &cobra.Command{
 }
 
 var listCmd = &cobra.Command{
-	Use:     "list",
-	Short:   "List all available co-authors",
-	Run:     listCoAuthors,
+	Use:   "list",
+	Short: "List all available co-authors",
+	Long: `List all configured co-authors from your configuration file.
+		This command displays each co-author's name, email, and alias
+		in a formatted table.`,
+	Run: listCoAuthors,
+	Example: "# List all co-authors\n" +
+		"pair list",
 	Aliases: []string{"ls"},
 }
 
@@ -131,7 +136,7 @@ func Execute() {
 		config.GetConfigPath(), "config file path")
 
 	// Add all subcommands
-	rootCmd.AddCommand(listCmd, showCmd, addCmd, removeCmd, clearCmd, initCmd, selectCmd, unselectCmd)
+	rootCmd.AddCommand(listCmd, showCmd, addCmd, removeCmd, clearCmd, initCmd, selectCmd, unselectCmd, docsCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
