@@ -13,7 +13,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "pair",
 	Short: "Manage Git commit co-authors",
-	Long:  `A CLI tool to manage co-authors for Git commits based on a JSON configuration file.`,
+	Long:  `Pair is a command-line tool designed to simplify Git co-author management for collaborative development`,
 }
 
 var listCmd = &cobra.Command{
