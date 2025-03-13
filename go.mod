@@ -10,7 +10,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 )
 
-replace github.com/spf13/cobra => /Users/philipp.eckel/Code/cobra
+// replace github.com/spf13/cobra => /Users/philipp.eckel/Code/cobra
 
 require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
