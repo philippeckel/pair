@@ -2,7 +2,11 @@
 
 <img style="height: 130px; width: auto; margin-left: 10px;" src="/favicon.svg" alt="Pair" align="right" />
 
-Pair is a command-line tool designed to simplify Git co-author management for collaborative development. When multiple developers work on the same code, Pair makes it easy to give proper credit to everyone by adding standardized "Co-authored-by:" trailers to commit messages.
+Pair is a command-line tool designed to simplify Git co-author management for collaborative development. When multiple developers work on the same code, Pair makes it easy to give proper credit to everyone by adding standardized `Co-authored-by:` trailers to commit messages.
+
+::: info
+Although named "Pair," the tool supports any number of co-authors, making it perfect for both pair programming and larger mob programming sessions.
+:::
 
 ## Why use Pair?
 
