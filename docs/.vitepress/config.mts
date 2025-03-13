@@ -1,13 +1,10 @@
 import { defineConfig } from "vitepress";
 
 export default defineConfig({
+  base: "/pair/",
   title: "Pair",
   description: "A Git co-authors management tool",
   themeConfig: {
-    // nav: [
-    //   { text: "Demo", link: "https://demo.opengist.io" },
-    //   { text: "Translate", link: "https://tr.opengist.io" },
-    // ],
     socialLinks: [
       { icon: "github", link: "https://github.com/philippeckel/pair" },
     ],
